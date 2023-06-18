@@ -1,9 +1,5 @@
 'use strict';
 const { Configuration, OpenAIApi } = require("openai");
-const { OpenAI } = require("langchain/llms/openai");
-const { BufferMemory } = require("langchain/memory");
-const { ConversationChain } = require("langchain/chains");
-
 
 function configureOpenAi(apiKey) {
   const configuration = new Configuration({
@@ -12,26 +8,6 @@ function configureOpenAi(apiKey) {
   return new OpenAIApi(configuration);
 }
 
-function configureLangChainChat(apiKey) {
-  const memory = new BufferMemory();
-
-  const model = new OpenAI({
-    openAIApiKey: apiKey,
-    modelName: "gpt-3.5-turbo",
-    temperature: 0.7,
-  });
-
-  const chain = new ConversationChain({
-    llm: model,
-    memory: memory,
-  });
-
-  return {
-    chain: chain,
-    memory: memory,
-    model: model,
-  }
-}
 
 module.exports = {
   /**
@@ -44,9 +20,7 @@ module.exports = {
   register({ strapi }) {
     const openai = configureOpenAi(process.env.OPEN_AI_KEY);
     strapi.openai = openai;
-
-    const langchain = configureLangChainChat(process.env.OPEN_AI_KEY);
-    strapi.langchain = langchain;
+    strapi.sessionStore = {};
   },
 
   /**
