@@ -32,14 +32,14 @@ module.exports = {
    */
 
   bootstrap({ strapi }) {
-    console.log("Bootstraping open-ai services...");
+    // console.log("Bootstraping open-ai services...");
 
-    if (strapi.openai !== undefined) {
-      console.log("OpenAI service is ready");
-    }
+    // if (strapi.openai !== undefined) {
+    //   console.log("OpenAI service is ready");
+    // }
 
-    if (strapi.model !== undefined) {
-      console.log("LangChain service is ready");
-    }
+    // if (strapi.model !== undefined) {
+    //   console.log("LangChain service is ready");
+    // }
   },
 };

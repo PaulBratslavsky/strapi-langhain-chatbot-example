@@ -79,7 +79,10 @@ module.exports = ({ strapi }) => ({
     let sessionId = ctx.request.body.data?.sessionId;
     const existingSession = await strapi.sessionStore[sessionId];
 
-    if (!sessionId || !existingSession) {
+    console.log("Session ID: ", sessionId)
+    console.log("Existing Session: ", existingSession)
+
+    if (!sessionId && !existingSession) {
       sessionId = generateSession(process.env.OPEN_AI_KEY, strapi);
       await saveInitialChat(sessionId, strapi);
       await getResponse(strapi.sessionStore[sessionId], await strapi.sessionStore[sessionId].initialPrompt);
