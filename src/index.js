@@ -9,39 +9,7 @@ module.exports = {
    */
 
   register({ strapi }) {
-    strapi.sessionStore = {
-      sessions: {},
-
-      saveSession: async (sessionId, langchain, initialPrompt) => {
-        strapi.sessionStore.sessions[sessionId] = {
-          chain: langchain,
-          initialPrompt: initialPrompt
-        };
-      },
-
-      getSession: async (sessionId) => {
-        return strapi.sessionStore.sessions[sessionId];
-      },
-
-      getHistory: async (session) => {
-        return await strapi.sessionStore.sessions[session].chain.memory.chatHistory
-      },
-
-      clearSessionById: async (sessionId) => {
-        delete strapi.sessionStore.sessions[sessionId];
-      },
-
-      clearAllSessions: async () => {
-        strapi.sessionStore.sessions = {};
-      },
-
-      showAllSessions: async () => {
-        const sessions = Object.keys(strapi.sessionStore.sessions);
-        for (const session of sessions) {
-          console.log(session);
-        }
-      }
-    };
+  
   },
 
   /**

@@ -1,5 +1,4 @@
-const { Configuration, OpenAIApi } = require("openai");
-
+const sessionManager = require("../sessionManager");
 const { OpenAI } = require("langchain/llms/openai");
 const { BufferMemory } = require("langchain/memory");
 const { ConversationChain } = require("langchain/chains");
@@ -27,7 +26,7 @@ function configureLangChainChat(apiKey) {
   }
 }
 
-async function generateSession(apiKey, strapi) {
+async function generateSession(apiKey) {
   const sessionId = uuidv4();
 
   const template = `
@@ -38,10 +37,10 @@ async function generateSession(apiKey, strapi) {
   `;
 
   const initializedPrompt = new PromptTemplate({ template, inputVariables: ["input"] });
-  const initialPrompt = initializedPrompt.format({ input: "Ava" });
-  const langChain = configureLangChainChat(apiKey)
 
-  await strapi.sessionStore.saveSession(sessionId, langChain.chain, initialPrompt)
+  const initialPrompt = await initializedPrompt.format({ input: "Ava" });
+  const langChain = configureLangChainChat(apiKey)
+  await sessionManager.saveSession(sessionId, langChain.chain, initialPrompt)
   return sessionId;
 }
 
@@ -52,37 +51,43 @@ function getResponse(session, input) {
 module.exports = ({ strapi }) => ({
   memoryChat: async (ctx) => {
     let sessionId = ctx.request.body.data?.sessionId;
-    const existingSession = await strapi.sessionStore.sessions[sessionId];
+    const existingSession = await sessionManager.sessions[sessionId];
 
     console.log("Session ID: ", sessionId)
     console.log("Existing Session: ", existingSession ? true : false)
 
-
     if (!existingSession) {
-      sessionId = await generateSession(process.env.OPEN_AI_KEY, strapi);
-      await getResponse(await strapi.sessionStore.getSession(sessionId), await strapi.sessionStore.getSession(sessionId).initialPrompt);
+      sessionId = await generateSession(process.env.OPEN_AI_KEY);
+      const session = await sessionManager.getSession(sessionId);
+      await getResponse(session, session.initialPrompt);
     }
 
-    const session = await strapi.sessionStore.getSession(sessionId);
-    const history = await strapi.sessionStore.getHistory(sessionId);
+    const session = await sessionManager.getSession(sessionId);
+    const history = await sessionManager.getHistory(sessionId);
     const response = await getResponse(session, ctx.request.body.data.input);
 
     response.sessionId = sessionId;
     response.history = history.messages;
 
-    await strapi.sessionStore.showAllSessions();
+    await sessionManager.showAllSessions();
     return response;
   },
 
+  deleteSessionById: async (ctx) => {
+    const sessionId = ctx.params.sessionId;
+    const sessionExists = await sessionManager.getSession(sessionId);
+    if (!sessionExists) return { error: "Session not found" };
+    await sessionManager.clearSessionById(sessionId);
+    return { message: "Session deleted" };
+  },
+
   clearAllSessions: async (ctx) => {
-    await strapi.sessionStore.clearAllSessions();
+    await sessionManager.clearAllSessions();
     return { message: "Sessions cleared" };
   },
 
   getAllSessions: async (ctx) => {
-    // TODO: TO BE IMPLEMENTED
-    const sessions = await strapi.sessionStore.showAllSessions();
-    console.log(sessions);
-    return { message: "Sessions shown", sessions: "Sessions" };
+    const sessions = await sessionManager.showAllSessions();
+    return sessions;
   },
 });

@@ -17,11 +17,35 @@ module.exports = ({strapi}) => ({
       throw new Error(err.message);
     }
   },
+  deleteSessionById: async (ctx) => {
+    try {
+      const response = await strapi
+        .service('api::strapi-agi.strapi-agi')
+        .deleteSessionById(ctx);
+      ctx.body = { data: response };
+    } catch (err) {
+      console.log(err.message);
+      throw new Error(err.message);
+    }
+  },
+
   clearAllSessions: async (ctx) => {
     try {
       const response = await strapi
         .service('api::strapi-agi.strapi-agi')
         .clearAllSessions(ctx);
+
+      ctx.body = { data: response };
+    } catch (err) {
+      console.log(err.message);
+      throw new Error(err.message);
+    }
+  },
+  getAllSessions: async (ctx) => {
+    try {
+      const response = await strapi
+        .service('api::strapi-agi.strapi-agi')
+        .getAllSessions(ctx);
 
       ctx.body = { data: response };
     } catch (err) {
