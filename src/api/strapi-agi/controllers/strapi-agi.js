@@ -17,4 +17,16 @@ module.exports = ({strapi}) => ({
       throw new Error(err.message);
     }
   },
+  clearAllSessions: async (ctx) => {
+    try {
+      const response = await strapi
+        .service('api::strapi-agi.strapi-agi')
+        .clearAllSessions(ctx);
+
+      ctx.body = { data: response };
+    } catch (err) {
+      console.log(err.message);
+      throw new Error(err.message);
+    }
+  },
 });

@@ -1,9 +1,14 @@
 module.exports = {
   routes: [
-    { // Path defined with an URL parameter
+    { 
       method: 'POST',
-      path: '/memory-chat', 
+      path: '/open-agi/memory-chat', 
       handler: 'strapi-agi.memoryChat',
     },
+    {
+      method: 'POST',
+      path: '/open-agi/clear-all-sessions',
+      handler: 'strapi-agi.clearAllSessions',
+    }
   ],
 };

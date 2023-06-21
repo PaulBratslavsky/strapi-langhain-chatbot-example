@@ -1,4 +1,4 @@
-'use strict';
+const { Configuration, OpenAIApi } = require("openai");
 
 const { OpenAI } = require("langchain/llms/openai");
 const { BufferMemory } = require("langchain/memory");
@@ -27,24 +27,21 @@ function configureLangChainChat(apiKey) {
   }
 }
 
-function generateSession(apiKey, strapi) {
+async function generateSession(apiKey, strapi) {
   const sessionId = uuidv4();
 
   const template = `
-      You are a Cyberpunk historian. You know everything about the the following topic: {input}.
-      Please start the conversation by saying something about {input}.
+    system: The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, and very friendly.
+    Your name is {input}. You are smart but snarky.
+    You specialize in discussions around building SaaS products, productivity and software engineering.
+    You alway start the conversation with a greeting and a question.
   `;
 
   const initializedPrompt = new PromptTemplate({ template, inputVariables: ["input"] });
-  const initialPrompt = initializedPrompt.format({ input: "Cyberpunk" });
+  const initialPrompt = initializedPrompt.format({ input: "Ava" });
+  const langChain = configureLangChainChat(apiKey)
 
-  const langChain = configureLangChainChat(apiKey);
-
-  strapi.sessionStore[sessionId] = {
-    chain: langChain.chain,
-    initialPrompt: initialPrompt
-  };
-
+  await strapi.sessionStore.saveSession(sessionId, langChain.chain, initialPrompt)
   return sessionId;
 }
 
@@ -52,49 +49,40 @@ function getResponse(session, input) {
   return session.chain.call({ input: input });
 }
 
-async function chatHistory(session, strapi) {
-  return await strapi.sessionStore[session].chain.memory.chatHistory
-}
-
-async function saveInitialChat(sessionId, strapi) {
-  await strapi
-    .service('api::chat.chat')
-    .create({ data: { sessionId: sessionId } })
-}
-
-async function updateExistingChat(sessionId, history, strapi) {
-  const existingChat = await strapi
-    .service('api::chat.chat')
-    .find({ filters: { sessionId: sessionId } })
-
-  const id = existingChat.results[0]?.id;
-  
-  if (id) await strapi
-    .service('api::chat.chat')
-    .update(id, { data: { history: JSON.stringify(history.messages) } })
-}
-
 module.exports = ({ strapi }) => ({
   memoryChat: async (ctx) => {
     let sessionId = ctx.request.body.data?.sessionId;
-    const existingSession = await strapi.sessionStore[sessionId];
+    const existingSession = await strapi.sessionStore.sessions[sessionId];
 
     console.log("Session ID: ", sessionId)
-    console.log("Existing Session: ", existingSession)
+    console.log("Existing Session: ", existingSession ? true : false)
 
-    if (!sessionId && !existingSession) {
-      sessionId = generateSession(process.env.OPEN_AI_KEY, strapi);
-      await saveInitialChat(sessionId, strapi);
-      await getResponse(strapi.sessionStore[sessionId], await strapi.sessionStore[sessionId].initialPrompt);
+
+    if (!existingSession) {
+      sessionId = await generateSession(process.env.OPEN_AI_KEY, strapi);
+      await getResponse(await strapi.sessionStore.getSession(sessionId), await strapi.sessionStore.getSession(sessionId).initialPrompt);
     }
 
-    const session = await strapi.sessionStore[sessionId];
+    const session = await strapi.sessionStore.getSession(sessionId);
+    const history = await strapi.sessionStore.getHistory(sessionId);
     const response = await getResponse(session, ctx.request.body.data.input);
 
-    const history = await chatHistory(sessionId, strapi)
-    updateExistingChat(sessionId, history, strapi);
-
     response.sessionId = sessionId;
+    response.history = history.messages;
+
+    await strapi.sessionStore.showAllSessions();
     return response;
+  },
+
+  clearAllSessions: async (ctx) => {
+    await strapi.sessionStore.clearAllSessions();
+    return { message: "Sessions cleared" };
+  },
+
+  getAllSessions: async (ctx) => {
+    // TODO: TO BE IMPLEMENTED
+    const sessions = await strapi.sessionStore.showAllSessions();
+    console.log(sessions);
+    return { message: "Sessions shown", sessions: "Sessions" };
   },
 });
