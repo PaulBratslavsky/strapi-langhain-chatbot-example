@@ -48,6 +48,24 @@ function getResponse(session, input) {
   return session.chain.call({ input: input });
 }
 
+async function logInitialChat(sessionId, strapi) {
+  await strapi
+    .service('api::chat.chat')
+    .create({ data: { sessionId: sessionId } })
+}
+
+async function updateExistingChat(sessionId, history, strapi) {
+  const existingChat = await strapi
+    .service('api::chat.chat')
+    .find({ filters: { sessionId: sessionId } })
+
+  const id = existingChat.results[0]?.id;
+  
+  if (id) await strapi
+    .service('api::chat.chat')
+    .update(id, { data: { history: JSON.stringify(history.messages) } })
+}
+
 module.exports = ({ strapi }) => ({
   memoryChat: async (ctx) => {
     let sessionId = ctx.request.body.data?.sessionId;
@@ -59,12 +77,15 @@ module.exports = ({ strapi }) => ({
     if (!existingSession) {
       sessionId = await generateSession(process.env.OPEN_AI_KEY);
       const session = await sessionManager.getSession(sessionId);
+      await logInitialChat(sessionId, strapi);
       await getResponse(session, session.initialPrompt);
     }
 
     const session = await sessionManager.getSession(sessionId);
     const history = await sessionManager.getHistory(sessionId);
     const response = await getResponse(session, ctx.request.body.data.input);
+
+    await updateExistingChat(sessionId, history, strapi);
 
     response.sessionId = sessionId;
     response.history = history.messages;
