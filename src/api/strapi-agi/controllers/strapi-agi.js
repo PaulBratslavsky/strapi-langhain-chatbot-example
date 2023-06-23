@@ -17,6 +17,7 @@ module.exports = ({strapi}) => ({
       throw new Error(err.message);
     }
   },
+
   getSessionById: async (ctx) => {
     try {
       const response = await strapi
@@ -29,6 +30,7 @@ module.exports = ({strapi}) => ({
       throw new Error(err.message);
     }
   },
+
   deleteSessionById: async (ctx) => {
     try {
       const response = await strapi
@@ -53,6 +55,7 @@ module.exports = ({strapi}) => ({
       throw new Error(err.message);
     }
   },
+  
   getAllSessions: async (ctx) => {
     try {
       const response = await strapi
