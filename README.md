@@ -1,58 +1,92 @@
-# 🚀 Getting started with Strapi
+# Building A Chat GPT Clone With Strapi Open AI and LangChain with Next JS 13 Frontend
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/developer-docs/latest/developer-resources/cli/CLI.html) (CLI) which lets you scaffold and manage your project in seconds.
+This article will explore how to build custom routes, services, and controllers to build a backend for our chat app using Strapi, Open AI, and LangChain. We will mostly spend time on the backend Strapi code implementation. But I will include the frontend code repo for you to use with this tutorial.
 
-### `develop`
+In this article, you will learn:
 
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/developer-docs/latest/developer-resources/cli/CLI.html#strapi-develop)
+- What is LangChain, and why would you use it with Open AI.
+- Giving memory to our chat via LangChain
+- How to build custom routes, controllers, and services in Strapi.
+- Creating a simple session service to manage our chat sessions.
+- And log all of our conversation histories and save them to Strapi.
 
-```
-npm run develop
-# or
-yarn develop
-```
+So let's get started.
 
-### `start`
+## What Are We Going To Build
 
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/developer-docs/latest/developer-resources/cli/CLI.html#strapi-start)
+The superpower of Strapi is that it is highly customizable and gives you the opportunity to add any additional functionality in code.
 
-```
-npm run start
-# or
-yarn start
-```
+Today we will take a look at how to integrate Open AI with LangChain to build our own Chat GPT chat clone with the power to remember.
 
-### `build`
+This article will explore how to build custom routes, services, and controllers to build a backend for our chat app using Strapi, Open AI, and LangChain. 
 
-Build your admin panel. [Learn more](https://docs.strapi.io/developer-docs/latest/developer-resources/cli/CLI.html#strapi-build)
+We will mostly spend time on the backend Strapi code implementation. But I will include the frontend code repo for you to use with this tutorial.
 
-```
-npm run build
-# or
-yarn build
-```
+In this article, you will learn:
 
-## ⚙️ Deployment
+- What is LangChain, and why would you use it with Open AI.
+- Giving memory to our chat via LangChain
+- How to build custom routes, controllers, and services in Strapi.
+- Creating a simple session service to manage our chat sessions.
+- And log all of our conversation histories and save them to Strapi.
 
-Strapi gives you many possible deployment options for your project. Find the one that suits you on the [deployment section of the documentation](https://docs.strapi.io/developer-docs/latest/setup-deployment-guides/deployment.html).
+So let's get started.
 
-## 📚 Learn more
+## What Are We Going To Build
 
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://docs.strapi.io) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
+Before getting too deep into the tutorial, let's check out what we will build. It will be a simple Chat GPT clone with a couple of tricks.  
 
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
+Not only will you be able to have multiple conversations, but we will also give our chat memory with LangCain so that during the conversation, open ai can remember what you are discussing during your session.  
 
-## ✨ Community
+We will also have a log of all previous conversation history.
 
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
+You can see the app in action.
 
----
+![App Demo](img/app-demo.gif)
 
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
-# strapi-langhain-chatbot-example
+## What Is Open AI
+
+Open AI is behind the popular Chat GPT App; what is awesome is that, as a developer, you have access to a couple of their powerful LLM models to programmatically use in your application.  
+
+Which can allow you to build cool things. Checkout out their [Docs](https://platform.openai.com/docs/introduction)
+
+![Open Ai](img/open-ai-api.png)
+
+## What Is LangChain
+
+![LangChain](img/lang-chain.png)
+
+LangChain is a framework designed for leveraging Large Language Models (LLMs).
+
+It allows you to build various applications such as chatbots, Generative Question-Answering (GQA), summarization, and much more.
+
+The core concept revolves around the ability to "chain" together different components, allowing us to create advanced use cases with LLMs. 
+
+Here are some examples.
+
+- Prompt Templates
+- LLMs: We can integrate large language models, not just Chat GPT
+- Agents: Agents will continue to self-prompt until the task is completed.
+- Memory: LangChain provides mechanisms to implement short-term and long-term memory within the chat application.
+
+By leveraging the power of LangChain, we can create a chat application that not only engages in multiple conversations but also possesses the ability to remember previous interactions. 
+
+Let's dive into the implementation details and get started with building our Chat GPT clone empowered with LangChain's memory capabilities.
+
+**note:** this is a popular Python framework, but they have a Javascript version too.
+
+You can checkout there docs (here)[https://js.langchain.com/docs/].
+
+## Project Overview
+
+![App Flow](img/app-flow.png)
+
+Our user will interact with our Strapi backend with our Next Js Frontend, or you can use Postman or Insomnia to test the API. 
+
+All of the logic will be within Strapi, including making a request to Open AI. Since everything runs on the server, we never have to worry about leaking our Open AI Token.
+
+We will also make an authorized request to our Strapi backend to prevent anyone without the Token from being able to use our API from anywhere but our Next JS website.
+
+**Note:** For the tutorial's brevity, I did not implement user authentication but something that we can easily do in the future.
+
+And instead just created an API Token that we can pass when making requests to our backend.  
