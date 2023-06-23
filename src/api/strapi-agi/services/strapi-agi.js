@@ -76,21 +76,38 @@ module.exports = ({ strapi }) => ({
 
     if (!existingSession) {
       sessionId = await generateSession(process.env.OPEN_AI_KEY);
-      const session = await sessionManager.getSession(sessionId);
+      const newSession = await sessionManager.getSession(sessionId);
       await logInitialChat(sessionId, strapi);
-      await getResponse(session, session.initialPrompt);
+      const response = await getResponse(newSession, newSession.initialPrompt);
+      response.sessionId = sessionId;
+      return response;
+    } else {
+      const session = await sessionManager.getSession(sessionId);
+      const history = await sessionManager.getHistory(sessionId);
+      const response = await getResponse(session, ctx.request.body.data.input);
+  
+      await updateExistingChat(sessionId, history, strapi);
+  
+      response.sessionId = sessionId;
+      response.history = history.messages;
+  
+      await sessionManager.showAllSessions();
+      return response;
+
     }
+  },
 
-    const session = await sessionManager.getSession(sessionId);
+  getSessionById: async (ctx) => {
+    const sessionId = ctx.params.sessionId;
+    const sessionExists = await sessionManager.getSession(sessionId);
+    if (!sessionExists) return { error: "Session not found" };
     const history = await sessionManager.getHistory(sessionId);
-    const response = await getResponse(session, ctx.request.body.data.input);
 
-    await updateExistingChat(sessionId, history, strapi);
-
-    response.sessionId = sessionId;
-    response.history = history.messages;
-
-    await sessionManager.showAllSessions();
+    const response = {
+      sessionId: sessionId,
+      history: history.messages,
+    };
+    
     return response;
   },
 

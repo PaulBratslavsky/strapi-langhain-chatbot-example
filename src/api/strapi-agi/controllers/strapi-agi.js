@@ -17,6 +17,18 @@ module.exports = ({strapi}) => ({
       throw new Error(err.message);
     }
   },
+  getSessionById: async (ctx) => {
+    try {
+      const response = await strapi
+        .service('api::strapi-agi.strapi-agi')
+        .getSessionById(ctx);
+
+      ctx.body = { data: response };
+    } catch (err) {
+      console.log(err.message);
+      throw new Error(err.message);
+    }
+  },
   deleteSessionById: async (ctx) => {
     try {
       const response = await strapi

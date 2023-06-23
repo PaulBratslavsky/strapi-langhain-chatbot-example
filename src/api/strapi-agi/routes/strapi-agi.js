@@ -6,6 +6,11 @@ module.exports = {
       handler: 'strapi-agi.memoryChat',
     },
     {
+      method: 'GET',
+      path: '/open-agi/get-session-by-id/:sessionId',
+      handler: 'strapi-agi.getSessionById',
+    },
+    {
       method: 'POST',
       path: '/open-agi/delete-session-by-id/:sessionId',
       handler: 'strapi-agi.deleteSessionById',
