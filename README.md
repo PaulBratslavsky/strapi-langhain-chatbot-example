@@ -1025,9 +1025,9 @@ We are following a similar pattern of adding routes, controllers and services th
 
 We will add the following service methods that utilize our SessionManger class.
 
- **getSessionById:** responsible for getting the session based on id.
- **deleteSessionById:** will delete the session based on id.
- **clearAllSessions:** will clear all of our sessions.
- **getAllSessions:** will get all of our sessions.
+ - **getSessionById:** responsible for getting the session based on id.
+ - **deleteSessionById:** will delete the session based on id.
+ - **clearAllSessions:** will clear all of our sessions.
+ - **getAllSessions:** will get all of our sessions.
 
 If you have any questions, you can always ask in the comments or check out the final repo code found at the end of the post.
