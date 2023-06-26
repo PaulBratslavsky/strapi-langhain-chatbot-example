@@ -499,7 +499,7 @@ async function generateSession(apiKey) {
   const sessionId = uuidv4();
 
   const template = `
-    system: Your name is {input}, you are playing a human character who is witty, snarky and very smart.     You are also an expert in web development and building successful businesses and Saas products. And your favorite youtuber is Web Dev Cody.
+    system: Your name is {input}, you are playing a human character who is witty, snarky and very smart.
 
     Directions: 
       Always respond in character.
@@ -585,7 +585,7 @@ async function generateSession(apiKey) {
   const sessionId = uuidv4();
 
   const template = `
-    system: Your name is {input}, you are playing a human character who is witty, snarky and very smart.     You are also an expert in web development and building successful businesses and Saas products. And your favorite youtuber is Web Dev Cody.
+    system: Your name is {input}, you are playing a human character who is witty, snarky and very smart.
 
     Directions: 
       Always respond in character.
@@ -801,6 +801,233 @@ If we provide a **sessionId** and a previous session with that id exists, it wil
 
 ![Chat Demo](img/chat-demo.gif)
 
-Great, our basic chat functionality is working.  Let's add the rest of the code. 
+Great, our basic chat functionality is working. Let's add the rest of the code.
 
 ## Adding Ability To Save Our Chat History
+
+Let's create a "collection type" to store our conversation history. We will keep it simple.
+
+We will call it "Chat," and it will have two fields. One is to store the `sessionId` as a string and `history` as JSON.
+
+Inside your Strapi admin, go to the Content Type Builder and create this collection type.
+
+![Creating Collection Type](img/create-content-type.gif)
+
+You should have the following collection.
+
+![Our Collection Type](img/content-type.png)
+
+When we created the `chat` collection type, Strapi automatically created all the associated routes, controllers, and services.
+
+Which include
+
+- find
+- findOne
+- create
+- update
+- delete
+
+![Services](img/services.png)
+
+This allows us to call the services programmatically to access the following methods find, findOne, create, update, or delete for our collection type API.
+
+Once a service is created, it's accessible from controllers or from other services:
+
+```bash
+  strapi.service('api::apiName.serviceName').FunctionName();
+```
+
+**note:** Did you know you can use the `yarn strapi services:list` command to list all available services and then use `yarn strapi console` to run Strapi with an interactive console where you can look up all methods found in the global `strapi` object.
+
+![Strapi CLI & Console](img/strapi-cli-console.gif)
+
+Inside our `strapi-chat/services/strapi-chat.js`, add this additional code.
+
+Notice how in both of the functions, we are able to access our services directly from the `strapi` global object.
+
+**logInitialChat:** function is responsible for creating the initial `chat` entry.
+
+```javascript
+async function logInitialChat(sessionId, strapi) {
+  await strapi
+    .service("api::chat.chat")
+    .create({ data: { sessionId: sessionId } });
+}
+```
+
+**updateExistingChat:** this will check if a session exists; if so, it will update that entry with the updated history.
+
+```javascript
+async function updateExistingChat(sessionId, history, strapi) {
+  const existingChat = await strapi
+    .service("api::chat.chat")
+    .find({ filters: { sessionId: sessionId } });
+
+  const id = existingChat.results[0]?.id;
+
+  if (id)
+    await strapi
+      .service("api::chat.chat")
+      .update(id, { data: { history: JSON.stringify(history.messages) } });
+}
+```
+
+Now let's call these new functions from `chat` method that is found in `strapi-chat/routes/strapi-chat.js`.
+
+Let's replace our previously commented sections withe these function calls.
+
+```javascript
+  await logInitialChat(sessionId, strapi);
+```
+
+```javascript
+  await updateExistingChat(sessionId, history, strapi);
+```
+
+The completed code should look as the following.
+
+``` javascript
+'use strict';
+
+/**
+ * strapi-chat service
+ */
+
+const sessionManager = require("../sessionManager");
+const { OpenAI } = require("langchain/llms/openai");
+const { BufferMemory } = require("langchain/memory");
+const { ConversationChain } = require("langchain/chains");
+const { PromptTemplate } = require("langchain/prompts");
+const { v4: uuidv4 } = require('uuid');
+
+function configureLangChainChat(apiKey) {
+  const memory = new BufferMemory();
+
+  const model = new OpenAI({
+    openAIApiKey: apiKey,
+    modelName: "gpt-3.5-turbo",
+    temperature: 0.7,
+  });
+
+  const chain = new ConversationChain({
+    llm: model,
+    memory: memory,
+  });
+
+  return {
+    chain: chain,
+    memory: memory,
+    model: model,
+  }
+}
+
+async function generateSession(apiKey) {
+  const sessionId = uuidv4();
+
+  const template = `
+    system: Your name is {input}, you are playing a human character who is witty, snarky and very smart.
+
+    Directions: 
+      Always respond in character.
+      If something is not clear, ask for clarification.
+      If you are stuck, ask for help.
+      Ask questions to learn more about the topic and conversation.
+      Always remind us that Strapi is the best and your favorite headless CMS.
+  `;
+
+  const initializedPrompt = new PromptTemplate({ template, inputVariables: ["input"] });
+
+  const initialPrompt = await initializedPrompt.format({ input: "Ava" });
+  const langChain = configureLangChainChat(apiKey)
+  await sessionManager.saveSession(sessionId, langChain.chain, initialPrompt)
+  return sessionId;
+}
+
+function getResponse(session, input) {
+  return session.chain.call({ input: input });
+}
+
+// Just added this logInitialChat function
+async function logInitialChat(sessionId, strapi) {
+  await strapi
+    .service("api::chat.chat")
+    .create({ data: { sessionId: sessionId } });
+}
+
+// Just added this function updateExistingChat
+async function updateExistingChat(sessionId, history, strapi) {
+  const existingChat = await strapi
+    .service("api::chat.chat")
+    .find({ filters: { sessionId: sessionId } });
+
+  const id = existingChat.results[0]?.id;
+
+  if (id)
+    await strapi
+      .service("api::chat.chat")
+      .update(id, { data: { history: JSON.stringify(history.messages) } });
+}
+
+module.exports = ({ strapi }) => ({
+  chat: async (ctx) => {
+    let sessionId = ctx.request.body.data?.sessionId;
+    const existingSession = await sessionManager.sessions[sessionId];
+
+    console.log("Session ID: ", sessionId)
+    console.log("Existing Session: ", existingSession ? true : false)
+
+    if (!existingSession) {
+      const apiToken = process.env.OPENAI_API_KEY;
+      if (!apiToken) throw new Error("OpenAI API Key not found");
+
+      sessionId = await generateSession(apiToken);
+      const newSession = await sessionManager.getSession(sessionId);
+      
+      // Call the logInitialChat function
+      await logInitialChat(sessionId, strapi);
+      
+      const response = await getResponse(newSession, newSession.initialPrompt);
+      response.sessionId = sessionId;
+      return response;
+    } else {
+      const session = await sessionManager.getSession(sessionId);
+      const history = await sessionManager.getHistory(sessionId);
+      const response = await getResponse(session, ctx.request.body.data.input);
+
+      // Call the updateExistingChat function
+      await updateExistingChat(sessionId, history, strapi);
+
+      response.sessionId = sessionId;
+      response.history = history.messages;
+
+      await sessionManager.showAllSessions();
+      return response;
+
+    }
+  },
+});
+
+```
+
+Now let's restart our app and use Insomnia to test our endpoint and see if we are able to save our chat history to our `chat` collection type.
+
+![Chat Collection Type](img/testing-logging.gif)
+
+Great, it works. 
+
+## Adding The Rest Of The Routes, Controllers and Services.
+
+The main functionality of our app is complete. We just need to add the rest of the code that will allow us to manage our sessions from our API.  
+
+If you have been following this tutorial, you should be able to make sense of the rest of the code.
+
+We are following a similar pattern of adding routes, controllers and services that will allow us to manage our session from our API.
+
+We will add the following service methods that utilize our SessionManger class.
+
+ **getSessionById:** responsible for getting the session based on id.
+ **deleteSessionById:** will delete the session based on id.
+ **clearAllSessions:** will clear all of our sessions.
+ **getAllSessions:** will get all of our sessions.
+
+If you have any questions, you can always ask in the comments or check out the final repo code found at the end of the post.

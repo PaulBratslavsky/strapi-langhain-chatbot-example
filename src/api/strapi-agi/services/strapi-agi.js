@@ -81,7 +81,9 @@ module.exports = ({ strapi }) => ({
     if (!existingSession) {
       sessionId = await generateSession(process.env.OPEN_AI_KEY);
       const newSession = await sessionManager.getSession(sessionId);
+      
       await logInitialChat(sessionId, strapi);
+      
       const response = await getResponse(newSession, newSession.initialPrompt);
       response.sessionId = sessionId;
       return response;
