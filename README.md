@@ -16,7 +16,7 @@ We will cover how to set one up later in this tutorial.
 
 So let's get started.
 
-## What Are We Going To Build
+## What Are We Going To Learn
 
 The superpower of Strapi is that it is highly customizable and gives you the opportunity to add any additional functionality in code.
 
@@ -34,7 +34,6 @@ In this article, you will learn:
 - Creating a simple session service to manage our chat sessions.
 - And log all of our conversation histories and save them to Strapi.
 
-So let's get started.
 
 ## What Are We Going To Build
 
@@ -96,6 +95,8 @@ We will also make an authorized request to our Strapi backend to prevent anyone 
 And instead just created an API Token that we can pass when making requests to our backend.
 
 ## Building Our Backend
+
+You can find the full code to the backend [here](https://github.com/PaulBratslavsky/strapi-chat-blog-repo) to use as reference.
 
 **Setting Up Strapi**
 
@@ -1031,8 +1032,6 @@ We will add the following service methods that utilize our SessionManger class.
 - **clearAllSessions:** will clear all of our sessions.
 - **getAllSessions:** will get all of our sessions.
 
-If you have any questions, you can always ask in the comments or check out the final repo code found at the end of the post.
-
 Let's update the `strapi-chat/routes/strapi-chat.js` file with the following code.
 
 ```javascript
@@ -1051,26 +1050,41 @@ module.exports = {
       method: "GET",
       path: "/strapi-chat/get-session-by-id/:sessionId",
       handler: "strapi-chat.getSessionById",
+      config: {
+        policies: [],
+        middlewares: [],
+      },
     },
     {
-      method: "POST",
+      method: "DELETE",
       path: "/strapi-chat/delete-session-by-id/:sessionId",
       handler: "strapi-chat.deleteSessionById",
+      config: {
+        policies: [],
+        middlewares: [],
+      },
     },
     {
       method: "POST",
       path: "/strapi-chat/clear-all-sessions",
       handler: "strapi-chat.clearAllSessions",
+      config: {
+        policies: [],
+        middlewares: [],
+      },
     },
     {
       method: "GET",
       path: "/strapi-chat/get-all-sessions",
       handler: "strapi-chat.getAllSessions",
+      config: {
+        policies: [],
+        middlewares: [],
+      },
     },
   ],
 };
 ```
-
 Let's update the `strapi-chat/controllers/strapi-chat.js` file with the following code.
 
 ```javascript
@@ -1304,5 +1318,26 @@ module.exports = ({ strapi }) => ({
   },
 });
 ```
-
 Now that all the changes have been implemented let's test all of our new endpoints with Insomnia before connecting our backend to our frontend.
+
+Restart your Strapi application, log into your admin panel, and navigate to     **settings->roles->public->permissions** you should now see all of our new endpoints that we just added.  
+
+Make sure to check all the boxes to allow access and click save.
+
+![New Routes](img/all-new-routes.png)
+
+You should now be able to test all the endpoints using Insomnia.
+
+![Testing Routes](img/testing-new-routes.gif)
+
+Congratulations, we are done with our backend; we learned how to set up our routes, controllers, and services.  
+
+As a final step, let's connect our backend to our front end.  I will provide the repo and walk you through the setup instructions.
+
+You can find the full code to the backend [here](https://github.com/PaulBratslavsky/strapi-chat-blog-repo).
+
+## Putting It All Together
+
+
+
+
