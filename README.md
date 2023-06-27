@@ -34,7 +34,6 @@ In this article, you will learn:
 - Creating a simple session service to manage our chat sessions.
 - And log all of our conversation histories and save them to Strapi.
 
-
 ## What Are We Going To Build
 
 Before getting too deep into the tutorial, let's check out what we will build. It will be a simple Chat GPT clone with a couple of tricks.
@@ -101,6 +100,8 @@ You can find the full code to the backend [here](https://github.com/PaulBratslav
 **Setting Up Strapi**
 
 Let's start by creating our Strapi app by running the following command.
+
+**note:** make sure you are using node 18.
 
 ```bash
   npx create-strapi-app@latest strapi-chat --quickstart
@@ -1085,6 +1086,7 @@ module.exports = {
   ],
 };
 ```
+
 Let's update the `strapi-chat/controllers/strapi-chat.js` file with the following code.
 
 ```javascript
@@ -1318,9 +1320,10 @@ module.exports = ({ strapi }) => ({
   },
 });
 ```
+
 Now that all the changes have been implemented let's test all of our new endpoints with Insomnia before connecting our backend to our frontend.
 
-Restart your Strapi application, log into your admin panel, and navigate to     **settings->roles->public->permissions** you should now see all of our new endpoints that we just added.  
+Restart your Strapi application, log into your admin panel, and navigate to **settings->roles->public->permissions** you should now see all of our new endpoints that we just added.
 
 Make sure to check all the boxes to allow access and click save.
 
@@ -1330,14 +1333,166 @@ You should now be able to test all the endpoints using Insomnia.
 
 ![Testing Routes](img/testing-new-routes.gif)
 
-Congratulations, we are done with our backend; we learned how to set up our routes, controllers, and services.  
+Congratulations, we are done with our backend; we learned how to set up our routes, controllers, and services.
 
-As a final step, let's connect our backend to our front end.  I will provide the repo and walk you through the setup instructions.
+As a final step, let's connect our backend to our front end. I will provide the repo and walk you through the setup instructions.
 
 You can find the full code to the backend [here](https://github.com/PaulBratslavsky/strapi-chat-blog-repo).
 
 ## Putting It All Together
 
+**Setting Up The Frontend Project**
 
+Let's set up our front-end project. You can find it here.  
+
+I am going to use GitHub CLI to clone the project. Navigate to a directory or folder where you would like to save the project and run the following command.
+
+``` bash
+	gh repo clone PaulBratslavsky/next13-chat-blog-repo next-js-client
+```
+
+Once the project is pulled, cd into the project folder and install all the packages using the following commands.
+
+``` bash
+    cd next-js-client
+    yarn 
+```
+Once all the dependencies and packages are installed, we must create a `.env` file with the appropriate variables. You can use the `.env.example file as reference.
+
+``` env
+	PRIVATE_API_URL=http://localhost:1337
+	PRIVATE_API_TOKEN=to_be_modified
+```
+In the root of your **Next JS** project, create a `.env` file and add the above variables.  
+
+Before we can start our project, we have to create an **API Token** in the Strapi Admin.
+
+**Create Strapi API Token**
+
+Navigate to **Settings->API Tokens** and click the **Create New Api Token** button.
+
+![Create New Token](img/create-api-token.png)
+
+Now create a new token. I will call mine `Next JS`; the token duration should be set to **unlimited**, and the type will be set to **custom**. Then scroll down to the **Strapi-chat** and select all the checkboxes.
+
+![Strapi Chat Settings](img/token-settings-1.png)
+
+![Strapi Chat Settings](img/token-settings-2.png)
+
+Once you have your token, paste it inside your `.env` file.
+
+![Adding Token To Env](img/save-token.gif)
+
+Let's test things out. Ensure your Strapi project is running, and inside our Next JS project directory, run `yarn dev` to start.
+
+![Frontend](img/next-demo.gif)
+
+## Notes On The Next 13 App Frontend
+
+Before finishing this tutorial, I just wanted to share why I used `route.ts` files in my Next JS app to make request calls to Strapi.
+
+This is a new feature in Next JS that allows you to create **Route Handlers**; you can learn more about it [here](https://nextjs.org/docs/app/api-reference/file-conventions/route)
+
+**Private Variable vs Public Variables**
+
+When using client components, I realized you can only inject public env variables using the `NEXT_PUBLIC` env variable prefix.
+
+This makes our environment variables accessible in the browser, meaning anyone can see them.
+
+But in my case, I wanted to keep the variable private, but Non-NEXT_PUBLIC_ environment variables are only available in the Node.js environment.
+
+**Next JS Routes Handlers**
+
+The `route.ts` files allow us access to `private env variables` from our Route Handler since they run on the server.
+
+Let's take a look at an example.
+
+**Router Handler Example**
+
+![Client Component](img/client-side-data-fetching.png)
+
+In the example above, we are looking at the client component code from our side navigation.  
+
+``` javascript
+  const getSession = useCallback(async () => {
+    const data = await apiRequest('/api/get-sessions', {});
+    setData(data.data);
+  }, []);
+
+``` 
+
+We are making a request via the getSession callback using our apiRequest helper method, which uses fetch.
+
+``` javascript
+export async function apiRequest(url: string, options: any) {
+  if (!url) throw new Error("Request URL is required");
+
+  const mergeOptions = { 
+    headers: {
+      "Content-Type": "application/json",
+    },
+    ...options 
+  };
+
+  try {
+    const response = await fetch(url, { ...mergeOptions });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch data from API");
+    }
+
+    const json = await response.json();
+    return json;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+```
+
+Since we are calling getSession from our useEffect from our client component, we don't have access to our private variables.
+
+``` javascript
+  useEffect(() => {
+    getSession();
+  }, []);
+```
+
+That is why instead of making a call directly to our Strapi API, we are making a call to our **Route Handler** within Next JS first, which will give us access to our private variables using `proeccess.env` and then we can make a call to Strapi API with our private variable credentials as we can see in the example below.
+
+``` javascript
+import { NextResponse } from "next/server";
+
+export async function GET(request: Request) {
+  const url = `${process.env.PRIVATE_API_URL}/api/strapi-chat/get-all-sessions`;
+  const token = process.env.PRIVATE_API_TOKEN;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-cache",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch data from API");
+    }
+
+    const json = await response.json();
+    console.log(json);
+    return NextResponse.json(json);
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+```
+
+Which allows us to keep our env variable private and on the server.
+
+## Conclusion
 
 
