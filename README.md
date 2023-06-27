@@ -1343,7 +1343,7 @@ You can find the full code to the backend [here](https://github.com/PaulBratslav
 
 **Setting Up The Frontend Project**
 
-Let's set up our front-end project. You can find it here.  
+Let's set up our front-end project. You can find it [here](https://github.com/PaulBratslavsky/next13-chat-blog-repo).  
 
 I am going to use GitHub CLI to clone the project. Navigate to a directory or folder where you would like to save the project and run the following command.
 
@@ -1495,7 +1495,6 @@ Which allows us to keep our env variable private and on the server.
 
 ## Conclusion
 
-
 In this tutorial, we looked at how to build custom routes, controllers, and services combined with third-party libraries like LangChain and Open AI to create our own implementation of Chat GPT.
 
 Then we looked at combining our Strapi Backend with a Next JS project.
@@ -1514,6 +1513,10 @@ Let me know if that is a tutorial you would be interested in.
 All the best,
 
 Paul
+
+[Strapi Backend Final GitHub Repo](https://github.com/PaulBratslavsky/strapi-chat-blog-repo)
+
+[Next JS Frontend Final GitHub Repo]([Next JS Frontend GitHub Repo](https://github.com/PaulBratslavsky/next13-chat-blog-repo))
  
 
 
