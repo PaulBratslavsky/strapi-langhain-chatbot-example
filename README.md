@@ -1496,3 +1496,25 @@ Which allows us to keep our env variable private and on the server.
 ## Conclusion
 
 
+In this tutorial, we looked at how to build custom routes, controllers, and services combined with third-party libraries like LangChain and Open AI to create our own implementation of Chat GPT.
+
+Then we looked at combining our Strapi Backend with a Next JS project.
+
+I hope you found this tutorial helpful, and I can't wait to see what you will build based on what you have learned here.
+
+**What's Next?**
+I want to explore how to move the functionality we built today into a Strapi Plugin. The benefit of that is that it will make it easier to share this functionality with others.
+
+For instance, we can have an **Open AI** api plugin that can expose different functionality from chat to image generation and is controlled from within our Strapi admin but allows us access via API endpoints. 
+
+That way, we will have access to all of our **open ai** wrapped services that can be consumed by multiple applications and not just Strapi.
+
+Let me know if that is a tutorial you would be interested in.
+
+All the best,
+
+Paul
+ 
+
+
+
