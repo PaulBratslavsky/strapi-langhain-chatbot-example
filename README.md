@@ -1516,7 +1516,7 @@ Paul
 
 [Strapi Backend Final GitHub Repo](https://github.com/PaulBratslavsky/strapi-chat-blog-repo)
 
-[Next JS Frontend Final GitHub Repo]([Next JS Frontend GitHub Repo](https://github.com/PaulBratslavsky/next13-chat-blog-repo))
+[Next JS Frontend Final GitHub Repo](https://github.com/PaulBratslavsky/next13-chat-blog-repo)
  
 
 
